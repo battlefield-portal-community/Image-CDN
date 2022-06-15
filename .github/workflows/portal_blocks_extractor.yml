@@ -31,6 +31,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: images-artifact
+          path: portal_blocks/
   
   commit_changes:
     needs: extract_blocks
@@ -41,6 +42,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: images-artifact      
+          path: portal_blocks/
       - run: |
           git fetch --prune --unshallow
       - name: Commit and push changes
