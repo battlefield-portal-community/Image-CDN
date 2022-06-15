@@ -1,0 +1,53 @@
+name: ExtractBlocksAsImages
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *" 
+jobs:
+  extract_blocks:
+    runs-on: ubuntu-latest
+    env:
+      BFPORTAL_EMAIL: ${{ secrets.BFPORTAL_EMAIL }}
+      BFPORTAL_PASSWORD: ${{ secrets.BFPORTAL_PASSWORD }}
+    steps:
+      - name: Check out this repo
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+      - name: Installed package list
+        run: apt list --installed
+      - name: Remove Chrome
+        run: sudo apt purge google-chrome-stable
+      # Chromium is already installed!
+      # - name: Install software
+      #   run: sudo apt install -y chromium-browser
+      - name: Install all necessary packages
+        run: pip install -r scripts/portal_blocks_extractor/requirements.txt
+      - name: Run the scraping script
+        run: python scripts/portal_blocks_extractor/script.py
+      - name: Upload images artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: images-artifact
+  
+  commit_changes:
+    needs: extract_blocks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download images artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: images-artifact      
+      - run: |
+          git fetch --prune --unshallow
+      - name: Commit and push changes
+        run: |
+          git add .
+          git diff
+          git config --global user.email "github-action-bot@example.com"
+          git config --global user.name "GitHub Action Bot"
+          git commit -m "Updated blocks images" -a || echo "No changes to commit"
+          git push 
