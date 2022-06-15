@@ -198,7 +198,7 @@ for el_index, el in enumerate(toolbox_categories):
             name = "Condition"
 
         logger.debug(f"\tExporting {name}")
-        images_dir = Path(__file__).parents[2]
+        images_dir = Path(__file__).parents[2] / "portal_blocks"
         images_dir.mkdir(exist_ok=True, parents=True)
         file_path = images_dir / name
         block.screenshot(str(f"{file_path}.png"))
