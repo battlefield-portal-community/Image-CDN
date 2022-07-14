@@ -7,8 +7,8 @@ jobs:
   extract_blocks:
     runs-on: ubuntu-latest
     env:
-      BFPORTAL_EMAIL: ${{ secrets.BFPORTAL_EMAIL }}
-      BFPORTAL_PASSWORD: ${{ secrets.BFPORTAL_PASSWORD }}
+      REMID: ${{ secrets.REMID }}
+      SID: ${{ secrets.SID }}
     steps:
       - name: Check out this repo
         uses: actions/checkout@v2
