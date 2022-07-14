@@ -18,25 +18,33 @@ from dotenv import load_dotenv
 from loguru import logger
 load_dotenv()
 
+
+class ProductionEnvironment(Exception):
+    pass
+
+
+DEBUG = os.getenv("DEBUG", False)
+
 chrome_options = Options()
 
-options = [
-    "--headless",
-    "--disable-gpu",
-    "--window-size=1920,1200",
-    "--ignore-certificate-errors",
-    "--disable-extensions",
-    "--no-sandbox",
-    "--disable-dev-shm-usage"
-]
+if not DEBUG:
+    options = [
+        "--headless",
+        "--disable-gpu",
+        "--window-size=1920,1200",
+        "--ignore-certificate-errors",
+        "--disable-extensions",
+        "--no-sandbox",
+        "--disable-dev-shm-usage"
+    ]
 
-for option in options:
-    chrome_options.add_argument(option)
+    for option in options:
+        chrome_options.add_argument(option)
+else:
+    logger.debug("Running in debug mode.. login session saved")
+    chrome_options.add_experimental_option("detach", True)
+    chrome_options.add_argument("--user-data-dir=/tmp/selenium")
 
-# chrome_options.add_argument("--detach")
-
-
-chrome_options.add_argument("--user-data-dir=/tmp/selenium")
 
 chrome_service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
 
@@ -50,27 +58,26 @@ def web_driver_wait(by: By, element: str, time: int = 10) -> WebElement:
 
 
 try:
-    driver.get('https://portal.battlefield.com/experience/rules?playgroundId=a56cf4d0-c713-11ec-b056-e3dbf89f52ce')
-
+    if DEBUG:
+        driver.get('https://portal.battlefield.com/experience/rules?playgroundId=a56cf4d0-c713-11ec-b056-e3dbf89f52ce')
     # handle login
     try:
-        web_driver_wait(By.CLASS_NAME, 'blocklyWorkspace', 15)
+        if DEBUG:
+            web_driver_wait(By.CLASS_NAME, 'blocklyWorkspace', 15)
+        else:
+            raise ProductionEnvironment
         logger.debug("Already Logged in 😃")
-    except TimeoutException:
+    except (TimeoutException, ProductionEnvironment):
         try:
-
             logger.debug('Not logged in....')
-            web_driver_wait(By.CLASS_NAME, 'login-button').click()
-            email = os.getenv('BFPORTAL_EMAIL', None)
-            password = os.getenv('BFPORTAL_PASSWORD', None)
-            if email is None or password is None:
-                sys.exit("email and password to login not found")
-            web_driver_wait(By.ID, 'email').send_keys(email)
-            web_driver_wait(By.ID, 'password').send_keys(password)
-            logger.debug('login info set....')
-            web_driver_wait(By.ID, 'logInBtn').click()
-            logger.debug("Trying to log in ....")
+            driver.get("https://accounts.ea.com/connect")
+            driver.add_cookie({'name': 'remid', 'value': os.getenv('REMID')})
+            driver.add_cookie({'name': 'sid', 'value': os.getenv('SID')})
+            logger.debug("Session Cookies Set")
+            driver.get("https://portal.battlefield.com/login")
             try:
+                driver.get(
+                    'https://portal.battlefield.com/experience/rules?playgroundId=a56cf4d0-c713-11ec-b056-e3dbf89f52ce')
                 web_driver_wait(By.CLASS_NAME, 'blocklyWorkspace')
                 logger.debug('Login Successful')
             except TimeoutException:
@@ -78,12 +85,13 @@ try:
                 raise
         except TimeoutException:
             logger.debug('Login failed...')
-            raise
+            driver.quit()
         except ConnectionRefusedError:
             raise
     except ConnectionRefusedError:
         driver.quit()
         sys.exit("Unable to connect to portal.battlefield.com.. exiting")
+
 
 except TimeoutException as e:
     logger.debug(f"element not loaded {e}")
