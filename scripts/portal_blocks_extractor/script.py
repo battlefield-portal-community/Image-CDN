@@ -70,7 +70,7 @@ try:
     except (TimeoutException, ProductionEnvironment):
         try:
             logger.debug('Not logged in....')
-            driver.get("https://accounts.ea.com/connect")
+            driver.get("https://accounts.ea.com")  # selenium cookies are set only when on the domain
             driver.add_cookie({'name': 'remid', 'value': os.getenv('REMID')})
             driver.add_cookie({'name': 'sid', 'value': os.getenv('SID')})
             logger.debug("Session Cookies Set")
