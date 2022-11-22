@@ -26,26 +26,9 @@ jobs:
         run: pip install -r scripts/portal_blocks_extractor/requirements.txt
       - name: Run the scraping script
         run: python scripts/portal_blocks_extractor/script.py
-      - name: Upload images artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: images-artifact
-          path: portal_blocks/
-  
-  commit_changes:
-    needs: extract_blocks
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Download images artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: images-artifact      
-          path: portal_blocks/
-      - run: |
-          git fetch --prune --unshallow
       - name: Commit and push changes
         run: |
+          git fetch --prune --unshallow
           git add .
           git diff
           git config --global user.email "github-action-bot@example.com"
