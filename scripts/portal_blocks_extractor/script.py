@@ -23,7 +23,7 @@ class ProductionEnvironment(Exception):
     pass
 
 
-DEBUG = os.getenv("DEBUG", False)
+DEBUG = os.getenv("DEBUG", "false").lower() != 'false'
 
 chrome_options = Options()
 
@@ -44,6 +44,7 @@ else:
     logger.debug("Running in debug mode.. login session saved")
     chrome_options.add_experimental_option("detach", True)
     chrome_options.add_argument("--user-data-dir=/tmp/selenium")
+    chrome_options.binary_location = '/usr/bin/chromium'
 
 
 chrome_service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
@@ -140,74 +141,79 @@ for el_index, el in enumerate(toolbox_categories):
         find_element(By.CLASS_NAME, "blocklyBlockCanvas")
 
     for index, block in enumerate(blocks):
-        if cat_name not in ["LITERALS", "VARIABLES", "CONTROL ACTIONS"]:
-            selectors = [
-                'g[transform = "translate(66,12)"]',
-                'g[transform = "translate(66,12.5)"]',
+        try:
+            if cat_name not in ["LITERALS", "VARIABLES", "CONTROL ACTIONS"]:
+                selectors = [
+                    'g[transform = "translate(66,12)"]',
+                    'g[transform = "translate(66,12.5)"]',
 
-                'g[transform = "translate(12,16)"]',
-                'g[transform = "translate(12,16.5)"]',
+                    'g[transform = "translate(12,16)"]',
+                    'g[transform = "translate(12,16.5)"]',
 
-                'g[transform = "translate(120,12)"]',
-                'g[transform = "translate(120,12.5)"]',
+                    'g[transform = "translate(120,12)"]',
+                    'g[transform = "translate(120,12.5)"]',
 
-                'g[transform = "translate(174,12)"]',
-                'g[transform = "translate(174,12.5)"]'
-            ]
+                    'g[transform = "translate(174,12)"]',
+                    'g[transform = "translate(174,12.5)"]',
 
-            name = driver.execute_script(
-                "return arguments[0].textContent",
-                block.find_element(
-                    By.CSS_SELECTOR,
-                    ",".join(selectors)
-                )
-            )
+                    'g[transform = "translate(12,12)"]',  # GetSubroutineArgument
+                ]
 
-        elif cat_name == "LITERALS":
-            if index == 0:
-                name = "String"
-            elif index == 1:
-                name = "Number"
-            else:
-                name = "Bool"
-        elif cat_name == 'VARIABLES':
-            if index == 0:
-                name = "Variable"
-            elif index == 1:
-                name = "GetVariable"
-            else:
-                name = "SetVariable"
-        else:
-            if index != 3:
                 name = driver.execute_script(
-                    "return arguments[0].querySelector('[transform]').textContent",
-                    block
+                    "return arguments[0].textContent",
+                    block.find_element(
+                        By.CSS_SELECTOR,
+                        ",".join(selectors)
+                    )
                 )
+
+            elif cat_name == "LITERALS":
+                if index == 0:
+                    name = "String"
+                elif index == 1:
+                    name = "Number"
+                else:
+                    name = "Bool"
+            elif cat_name == 'VARIABLES':
+                if index == 0:
+                    name = "Variable"
+                elif index == 1:
+                    name = "GetVariable"
+                else:
+                    name = "SetVariable"
             else:
-                name = "If"
+                if index != 3:
+                    name = driver.execute_script(
+                        "return arguments[0].querySelector('[transform]').textContent",
+                        block
+                    )
+                else:
+                    name = "If"
 
-        if index > 8:
-            base = 0
-            if el_index < 7:
-                base = -96
-            else:
-                base = -61
+            if index > 8:
+                base = 0
+                if el_index < 7:
+                    base = -96
+                else:
+                    base = -61
 
-            transform_string = f'arguments[0].' \
-                               f'setAttribute("transform", ' \
-                               f'"translate(0, {base * (1 if index == 9 else index - 9)}) scale(1)")'
-            driver.execute_script(
-                transform_string, block_canvas
-            )
+                transform_string = f'arguments[0].' \
+                                   f'setAttribute("transform", ' \
+                                   f'"translate(0, {base * (1 if index == 9 else index - 9)}) scale(1)")'
+                driver.execute_script(
+                    transform_string, block_canvas
+                )
 
-        if name == "RULE":
-            name = "Rule"
-        elif name == "CONDITION":
-            name = "Condition"
+            if name == "RULE":
+                name = "Rule"
+            elif name == "CONDITION":
+                name = "Condition"
 
-        logger.debug(f"\tExporting {name}")
-        images_dir = Path(__file__).parents[2] / "portal_blocks"
-        images_dir.mkdir(exist_ok=True, parents=True)
-        file_path = images_dir / name
-        block.screenshot(str(f"{file_path}.png"))
+            logger.debug(f"\tExporting {name}")
+            images_dir = Path(__file__).parents[2] / "portal_blocks"
+            images_dir.mkdir(exist_ok=True, parents=True)
+            file_path = images_dir / name
+            block.screenshot(str(f"{file_path}.png"))
+        except NoSuchElementException:
+            logger.critical(f"Unable to find image for {block.text}")
 
