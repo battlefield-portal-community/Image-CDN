@@ -31,7 +31,7 @@ jobs:
           git fetch --prune --unshallow
           git add .
           git diff
-          git config --global user.email "github-action-bot@example.com"
-          git config --global user.name "GitHub Action Bot"
+          git config --global user.email "ranger@bfportal.gg"
+          git config --global user.name "Ranger"
           git commit -m "Updated blocks images" -a || echo "No changes to commit"
           git push 
