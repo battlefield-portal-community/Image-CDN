@@ -128,7 +128,7 @@ for el_index, el in enumerate(toolbox_categories):
     #  document.getElementsByClassName("blocklyFlyout")[0].children[1].children[0].children
     #  ].filter(el => el.tagName == "rect")
     driver.execute_script(
-        'arguments[0].setAttribute("style", "fill: rgb(54, 57, 62); fill-opacity: 1;")',
+        'arguments[0].setAttribute("style", "fill: rgb(47, 49, 54); fill-opacity: 1;")',
         driver.find_element(By.CLASS_NAME, 'blocklyFlyoutBackground')
     )
     blocks = driver.find_element(By.CLASS_NAME, "blocklyFlyout"). \

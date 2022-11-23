@@ -1,5 +1,10 @@
 name: ExtractBlocksAsImages
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - scripts/portal_blocks_extractor/**
   workflow_dispatch:
   schedule:
     - cron: "0 0 * * *" 
