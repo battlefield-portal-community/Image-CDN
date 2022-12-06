@@ -30,12 +30,8 @@ chrome_options = Options()
 if not DEBUG:
     options = [
         "--headless",
-        "--disable-gpu",
         "--window-size=1920,1200",
         "--ignore-certificate-errors",
-        "--disable-extensions",
-        "--no-sandbox",
-        "--disable-dev-shm-usage"
     ]
 
     for option in options:
@@ -47,7 +43,7 @@ else:
     chrome_options.binary_location = '/usr/bin/chromium'
 
 
-chrome_service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
+chrome_service = Service(ChromeDriverManager().install())
 
 driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
 
