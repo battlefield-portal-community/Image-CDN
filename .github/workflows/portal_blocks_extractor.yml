@@ -16,17 +16,19 @@ jobs:
       SID: ${{ secrets.SID }}
     steps:
       - name: Check out this repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.10'  
+          python-version: '3.11'
+          cache: 'pip'
       
       - name: setup chrome
         uses: browser-actions/setup-chrome@latest
 
-      - name: Install all necessary packages
+      - name: Install dependencies
         run: pip install -r scripts/portal_blocks_extractor/requirements.txt
+
       - name: Run the scraping script
         run: python scripts/portal_blocks_extractor/script.py
       - name: Commit and push changes
